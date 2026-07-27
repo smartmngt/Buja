@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>빗각 백테스트</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0D13; --panel:#131824; --panel-2:#0F141E; --line:#212838;
+    --gold:#D9B44A; --gold-soft:#E8CE7E;
+    --long:#2ECC9B; --short:#E5566B;
+    --text:#EAECF1; --muted:#8B93A5; --faint:#5A6172;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{background:var(--bg); color:var(--text);
+    font-family:"Pretendard",system-ui,sans-serif; -webkit-font-smoothing:antialiased;}
+  body{padding:16px 14px 40px; max-width:760px; margin:0 auto;}
+  .mono{font-family:"JetBrains Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums;}
+  header{margin-bottom:18px; padding-top:6px;}
+  .eyebrow{font-family:"Space Grotesk",sans-serif; font-weight:500; letter-spacing:.28em;
+    font-size:11px; color:var(--gold); text-transform:uppercase; margin-bottom:8px;}
+  h1{font-size:26px; font-weight:700; letter-spacing:-.01em; line-height:1.15;}
+  h1 span{color:var(--gold);}
+  .sub{color:var(--muted); font-size:13px; margin-top:8px; line-height:1.55;}
+  .sub b{color:var(--gold-soft);}
+  .panel{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:16px; margin-bottom:14px;}
+  .panel-title{font-size:12px; color:var(--muted); letter-spacing:.04em; margin-bottom:12px;
+    text-transform:uppercase; font-family:"Space Grotesk",sans-serif;}
+  .row{display:flex; gap:8px; flex-wrap:wrap;}
+  .chip{flex:1 1 auto; min-width:64px; text-align:center; padding:11px 8px;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:11px;
+    font-size:14px; font-weight:600; color:var(--muted); cursor:pointer; user-select:none; transition:.15s;}
+  .chip:active{transform:scale(.97);}
+  .chip.on{background:linear-gradient(180deg,rgba(217,180,74,.18),rgba(217,180,74,.06));
+    border-color:var(--gold); color:var(--gold-soft);}
+  .sliders{display:grid; gap:15px; margin-top:6px;}
+  .slabel{display:flex; justify-content:space-between; font-size:13px; margin-bottom:7px;}
+  .slabel b{color:var(--gold-soft); font-weight:700;}
+  .slabel .hint{color:var(--faint); font-size:11px;}
+  input[type=range]{width:100%; -webkit-appearance:none; height:4px; border-radius:4px; background:var(--line); outline:none;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:20px; height:20px; border-radius:50%;
+    background:var(--gold); cursor:pointer; box-shadow:0 0 0 4px rgba(217,180,74,.15);}
+  .run{width:100%; margin-top:4px; padding:16px; border:none; border-radius:14px;
+    background:linear-gradient(180deg,var(--gold-soft),var(--gold)); color:#20180A;
+    font-family:"Pretendard"; font-size:16px; font-weight:700; cursor:pointer; letter-spacing:.02em; transition:.15s;}
+  .run:active{transform:scale(.99);} .run:disabled{opacity:.55; cursor:default;}
+  .status{font-size:12px; color:var(--muted); margin-top:10px; text-align:center; min-height:16px;}
+  .status.err{color:var(--short);}
+  canvas{width:100%; display:block; border-radius:10px; background:var(--panel-2); border:1px solid var(--line);}
+  .legend{display:flex; gap:16px; margin-top:10px; font-size:11px; color:var(--muted); flex-wrap:wrap;}
+  .legend i{display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:middle;}
+  .stats{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+  .stat{background:var(--panel-2); border:1px solid var(--line); border-radius:12px; padding:14px 10px;}
+  .stat .k{font-size:11px; color:var(--muted); margin-bottom:6px;}
+  .stat .v{font-size:22px; font-weight:700;}
+  .stat .v.pos{color:var(--long);} .stat .v.neg{color:var(--short);}
+  .verdict{margin-top:12px; padding:13px 15px; border-radius:12px; font-size:14px; line-height:1.5;
+    border:1px solid var(--line); background:var(--panel-2); color:var(--muted);}
+  .verdict b{color:var(--text);}
+  .note{font-size:11.5px; color:var(--faint); line-height:1.6; margin-top:18px; text-align:center;}
+  .empty{color:var(--faint); text-align:center; padding:30px 10px; font-size:13px;}
+  .best{background:linear-gradient(180deg,rgba(217,180,74,.15),rgba(217,180,74,.04));
+    border:1px solid var(--gold); border-radius:12px; padding:15px; font-size:14px; line-height:1.6; color:var(--text);}
+  .best b{color:var(--gold-soft);} .bset{color:var(--muted); font-size:12px;}
+  .swt{width:100%; border-collapse:collapse; margin-top:14px; font-size:13px;}
+  .swt th{color:var(--muted); font-weight:600; text-align:left; padding:8px 5px;
+    border-bottom:1px solid var(--line); font-size:11px;}
+  .swt td{padding:9px 5px; border-bottom:1px solid var(--line);
+    font-family:"JetBrains Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums;}
+  .swt td.p{color:var(--long);} .swt td.n{color:var(--short);}
+  .swnote{font-size:11.5px; color:var(--faint); margin-top:11px; line-height:1.55;}
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Bitgak Backtest</div>
+  <h1>인범식 <span>빗각</span> 백테스트</h1>
+  <p class="sub">시세의 지배적인 각도를 계산해 <b>등간격 평행 빗각선</b>을 자동으로 긋고, 가격이 각 선에서 지지·저항받고 튕기는 지점을 진입·손절·익절로 잡아 성과를 보여줍니다.</p>
+</header>
+
+<div class="panel">
+  <div class="panel-title">종목</div>
+  <div class="row" id="symbols"></div>
+  <div class="panel-title" style="margin-top:16px;">봉 (시간 단위)</div>
+  <div class="row" id="intervals"></div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">전략 설정</div>
+  <div class="sliders">
+    <div>
+      <div class="slabel"><span>빗각 간격 <span class="hint">(선 사이 폭 · 좁을수록 거래↑)</span></span><b id="wfv">0.60σ</b></div>
+      <input type="range" id="wf" min="30" max="110" value="60">
+    </div>
+    <div>
+      <div class="slabel"><span>손절 여유 <span class="hint">(선 이탈 허용)</span></span><b id="sfv">0.30칸</b></div>
+      <input type="range" id="sf" min="10" max="60" value="30">
+    </div>
+    <div>
+      <div class="slabel"><span>익절 배수 <span class="hint">(손절 대비 R)</span></span><b id="trv">2.0R</b></div>
+      <input type="range" id="tr" min="10" max="40" value="20">
+    </div>
+  </div>
+</div>
+
+<button class="run" id="run">백테스트 실행</button>
+<button class="run" id="sweep" style="margin-top:10px;background:linear-gradient(180deg,#2A3345,#1B2231);color:var(--gold-soft);border:1px solid var(--gold);">🔎 최적 조합 자동 탐색 (승률순)</button>
+<button class="run" id="wfbtn" style="margin-top:10px;background:linear-gradient(180deg,#22323A,#16242A);color:#9BE3C9;border:1px solid var(--long);">🧪 walk-forward 검증 (선택한 종목·봉)</button>
+<div class="status" id="status"></div>
+
+<div class="panel" id="sweepPanel" style="display:none;margin-top:14px;">
+  <div class="panel-title">자동 탐색 결과</div>
+  <div id="sweepWrap"></div>
+</div>
+
+<div class="panel" id="wfPanel" style="display:none;margin-top:14px;">
+  <div class="panel-title">walk-forward 검증</div>
+  <div id="wfWrap"></div>
+</div>
+
+<div class="panel" style="margin-top:14px;">
+  <div class="panel-title">차트</div>
+  <canvas id="chart" height="320"></canvas>
+  <div class="legend">
+    <span><i style="background:var(--muted)"></i>시세</span>
+    <span><i style="background:var(--gold)"></i>빗각 격자(평행 추세선)</span>
+    <span><i style="background:var(--long)"></i>수익 거래</span>
+    <span><i style="background:var(--short)"></i>손실 거래</span>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">성과</div>
+  <div id="statsWrap"><div class="empty">위 버튼을 눌러 백테스트를 실행하세요.</div></div>
+</div>
+
+<p class="note">시세: Binance 공개 데이터 · 빗각 격자는 전체 기간에 걸쳐 그려진 검증용 화면입니다.<br>실제 매매 결과를 보장하지 않으며 투자 자문이 아닙니다. 실거래 전 소액·모의로 검증하세요.</p>
+
+<script>
+const SYMBOLS=["BTCUSDT","ETHUSDT","SOLUSDT","XRPUSDT","DOGEUSDT"];
+const INTERVALS=[["15m","15분"],["1h","1시간"],["4h","4시간"],["1d","일봉"],["1w","1주"],["1M","1달"]];
+let symbol="BTCUSDT", interval="4h";
+const FEE=0.0005, TOL=0.004;
+
+const symWrap=document.getElementById("symbols");
+SYMBOLS.forEach(s=>{const el=document.createElement("div");el.className="chip"+(s===symbol?" on":"");
+  el.textContent=s.replace("USDT","");el.onclick=()=>{symbol=s;paint(symWrap,s);};symWrap.appendChild(el);});
+const intWrap=document.getElementById("intervals");
+INTERVALS.forEach(([v,label])=>{const el=document.createElement("div");el.className="chip"+(v===interval?" on":"");
+  el.textContent=label;el.dataset.v=v;el.onclick=()=>{interval=v;paint(intWrap,v,true);};intWrap.appendChild(el);});
+function paint(wrap,val,byData){[...wrap.children].forEach(c=>{
+  const match=byData?c.dataset.v===val:c.textContent===val.replace("USDT","");c.classList.toggle("on",match);});}
+const wf=document.getElementById("wf"),sf=document.getElementById("sf"),tr=document.getElementById("tr");
+const wfv=document.getElementById("wfv"),sfv=document.getElementById("sfv"),trv=document.getElementById("trv");
+wf.oninput=()=>wfv.textContent=(wf.value/100).toFixed(2)+"σ";
+sf.oninput=()=>sfv.textContent=(sf.value/100).toFixed(2)+"칸";
+tr.oninput=()=>trv.textContent=(tr.value/10).toFixed(1)+"R";
+
+function linreg(y){
+  const n=y.length; let sx=0,sy=0,sxy=0,sxx=0;
+  for(let i=0;i<n;i++){sx+=i;sy+=y[i];sxy+=i*y[i];sxx+=i*i;}
+  const m=(n*sxy-sx*sy)/(n*sxx-sx*sx), b=(sy-m*sx)/n;
+  let ss=0; for(let i=0;i<n;i++){const d=y[i]-(m*i+b); ss+=d*d;}
+  return {m,b,sigma:Math.sqrt(ss/n)};
+}
+function backtest(data,cfg){
+  const {high,low,close}=data, n=close.length;
+  const reg=linreg(close), W=reg.sigma*cfg.wf, center=i=>reg.m*i+reg.b;
+  const trades=[]; let open=null, stop=0, target=0, last=-1e9;
+  for(let i=0;i<n;i++){
+    const c=center(i);
+    if(open){
+      const s=open.side;
+      if(s==="long"){
+        if(low[i]<=stop){close_(open,i,stop);trades.push(open);open=null;last=i;}
+        else if(high[i]>=target){close_(open,i,target);trades.push(open);open=null;last=i;}
+      }else{
+        if(high[i]>=stop){close_(open,i,stop);trades.push(open);open=null;last=i;}
+        else if(low[i]<=target){close_(open,i,target);trades.push(open);open=null;last=i;}
+      }
+      if(open) continue;
+    }
+    if(i-last<3 || W<=0) continue;
+    const k=Math.round((close[i]-c)/W), lvl=c+k*W;
+    if(k>=1 && high[i]>=lvl*(1-TOL) && close[i]<=lvl*(1+TOL)){
+      const e=close[i]; stop=lvl+cfg.sf*W; const risk=stop-e;
+      if(risk>0){target=e-cfg.tr*risk; open={side:"short",eIdx:i,ePx:e};}
+    }else if(k<=-1 && low[i]<=lvl*(1+TOL) && close[i]>=lvl*(1-TOL)){
+      const e=close[i]; stop=lvl-cfg.sf*W; const risk=e-stop;
+      if(risk>0){target=e+cfg.tr*risk; open={side:"long",eIdx:i,ePx:e};}
+    }
+  }
+  return {trades,reg,W};
+}
+function close_(t,i,px){t.xIdx=i;t.xPx=px;
+  const g=t.side==="long"?(px-t.ePx)/t.ePx:(t.ePx-px)/t.ePx; t.r=g-2*FEE;}
+function summarize(trades){
+  if(!trades.length) return {trades:0};
+  const rs=trades.map(t=>t.r),w=rs.filter(r=>r>0),l=rs.filter(r=>r<=0);
+  let eq=1,peak=1,mdd=0; rs.forEach(r=>{eq*=1+r;peak=Math.max(peak,eq);mdd=Math.min(mdd,(eq-peak)/peak);});
+  const pf=l.length?w.reduce((a,b)=>a+b,0)/Math.abs(l.reduce((a,b)=>a+b,0)):Infinity;
+  return {trades:trades.length,win:+(w.length/trades.length*100).toFixed(1),
+    pf:pf===Infinity?Infinity:+pf.toFixed(2),ret:+((eq-1)*100).toFixed(1),mdd:+(mdd*100).toFixed(1)};
+}
+async function getData(){
+  const url=`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=1000`;
+  const r=await fetch(url); if(!r.ok) throw new Error("HTTP "+r.status);
+  const j=await r.json();
+  return {high:j.map(k=>+k[2]),low:j.map(k=>+k[3]),close:j.map(k=>+k[4]),demo:false};
+}
+function demoData(){
+  const n=800,close=[],high=[],low=[]; let p=100;
+  for(let i=0;i<n;i++){p+=i*0.0002+Math.sin(i/80)*0.5+(Math.random()-0.5)*1.2;p=Math.max(p,10);
+    close.push(p);high.push(p+Math.random()*0.7);low.push(p-Math.random()*0.7);}
+  return {high,low,close,demo:true};
+}
+const cv=document.getElementById("chart"),ctx=cv.getContext("2d");
+function draw(data,res){
+  const dpr=window.devicePixelRatio||1,W=cv.clientWidth,H=320;
+  cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
+  const c=data.close,n=c.length,pad=8;
+  const mn=Math.min(...data.low),mx=Math.max(...data.high),rng=(mx-mn)||1;
+  const X=i=>pad+(i/(n-1))*(W-2*pad), Y=v=>pad+(1-(v-mn)/rng)*(H-2*pad);
+  const {reg,W:bw}=res, center=i=>reg.m*i+reg.b;
+  if(bw>0){
+    const kLo=Math.floor((mn-center(n-1))/bw)-1, kHi=Math.ceil((mx-center(0))/bw)+1;
+    for(let k=kLo;k<=kHi;k++){
+      const y0=center(0)+k*bw, y1=center(n-1)+k*bw;
+      ctx.strokeStyle=k===0?"rgba(232,206,126,.85)":"rgba(217,180,74,.34)";
+      ctx.lineWidth=k===0?1.6:1;
+      ctx.beginPath();ctx.moveTo(X(0),Y(y0));ctx.lineTo(X(n-1),Y(y1));ctx.stroke();
+    }
+  }
+  ctx.strokeStyle="rgba(180,190,210,.78)";ctx.lineWidth=1.2;ctx.beginPath();
+  c.forEach((v,i)=>{i?ctx.lineTo(X(i),Y(v)):ctx.moveTo(X(i),Y(v));});ctx.stroke();
+  res.trades.forEach(t=>{ if(t.xIdx==null) return;
+    const col=t.r>0?"#2ECC9B":"#E5566B";
+    ctx.strokeStyle=col;ctx.globalAlpha=.9;ctx.lineWidth=1.8;ctx.beginPath();
+    ctx.moveTo(X(t.eIdx),Y(t.ePx));ctx.lineTo(X(t.xIdx),Y(t.xPx));ctx.stroke();
+    ctx.globalAlpha=1;ctx.fillStyle=col;ctx.beginPath();ctx.arc(X(t.eIdx),Y(t.ePx),3.4,0,7);ctx.fill();});
+}
+const runBtn=document.getElementById("run"),statusEl=document.getElementById("status"),statsWrap=document.getElementById("statsWrap");
+runBtn.onclick=async()=>{
+  runBtn.disabled=true;statusEl.className="status";statusEl.textContent="시세 불러오는 중…";
+  let data; try{data=await getData();}catch(e){data=demoData();}
+  const cfg={wf:wf.value/100, sf:sf.value/100, tr:tr.value/10};
+  const res=backtest(data,cfg), s=summarize(res.trades);
+  draw(data,res);
+  if(data.demo){statusEl.className="status err";statusEl.textContent="실시간 연결 실패 → 데모 데이터로 표시 중 (네트워크/지역 제한일 수 있음)";}
+  else{statusEl.className="status";statusEl.textContent=`${symbol} · ${interval} · 1000봉 · 빗각 ${res.reg.m>0?"상승":"하락"}세`;}
+  if(!s.trades){
+    statsWrap.innerHTML='<div class="empty">이 설정에선 진입 신호가 없었습니다.<br>빗각 간격을 좁혀(왼쪽으로) 다시 실행해 보세요.</div>';
+    runBtn.disabled=false;return;}
+  const pf=s.pf===Infinity?"∞":s.pf, retCls=s.ret>=0?"pos":"neg";
+  statsWrap.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">거래수</div><div class="v mono">${s.trades}</div></div>
+      <div class="stat"><div class="k">승률</div><div class="v mono">${s.win}<span style="font-size:13px">%</span></div></div>
+      <div class="stat"><div class="k">손익비 PF</div><div class="v mono">${pf}</div></div>
+      <div class="stat"><div class="k">누적 수익</div><div class="v mono ${retCls}">${s.ret>0?"+":""}${s.ret}<span style="font-size:13px">%</span></div></div>
+      <div class="stat"><div class="k">최대 낙폭</div><div class="v mono neg">${s.mdd}<span style="font-size:13px">%</span></div></div>
+      <div class="stat"><div class="k">빗각 각도</div><div class="v mono" style="font-size:16px">${res.reg.m>0?"▲ 상승":"▼ 하락"}</div></div>
+    </div>
+    <div class="verdict">${verdict(s)}</div>`;
+  runBtn.disabled=false;
+};
+function verdict(s){
+  const pf=s.pf===Infinity?9:s.pf;
+  if(s.trades<10) return `표본이 <b>${s.trades}건</b>으로 적어 판단하기 이릅니다. 빗각 간격을 좁혀 표본을 늘려보세요.`;
+  if(pf>=1.5&&s.ret>0) return `이 구간에선 <b>손익비 ${pf}·수익 ${s.ret}%</b>로 양호합니다. 단, 한 코인·한 구간의 과거 성과이니 다른 코인·기간에서도 유지되는지 확인이 필요합니다.`;
+  if(pf>=1) return `<b>본전 부근</b>입니다. 수수료를 감안하면 실전 우위가 뚜렷하진 않습니다.`;
+  return `이 설정은 <b>손실</b>입니다. 빗각은 추세·변동이 규칙적인 구간에서 잘 맞으니, 코인·봉·간격을 바꿔 통하는 조합을 찾아보세요.`;
+}
+// ---------- 자동 탐색 (전 종목·전 봉·모든 설정 → 승률순) ----------
+const SWEEP_SYM=["BTCUSDT","ETHUSDT","SOLUSDT","XRPUSDT","DOGEUSDT"];
+const SWEEP_IV=[["4h","4시간"],["1d","일봉"],["1w","1주"],["1M","1달"]];
+const SWEEP_WF=[0.4,0.6,0.8], SWEEP_SF=[0.2,0.3], SWEEP_TR=[1.5,2.0,3.0];
+const MIN_TRADES=15;
+const sweepBtn=document.getElementById("sweep");
+const sweepPanel=document.getElementById("sweepPanel");
+const sweepWrap=document.getElementById("sweepWrap");
+const pfv=r=>r.pf===Infinity?9:r.pf;
+
+async function fetchAny(sym,iv){
+  const url=`https://api.binance.com/api/v3/klines?symbol=${sym}&interval=${iv}&limit=1000`;
+  const r=await fetch(url); if(!r.ok) throw 0; const j=await r.json();
+  return {high:j.map(k=>+k[2]),low:j.map(k=>+k[3]),close:j.map(k=>+k[4])};
+}
+sweepBtn.onclick=async()=>{
+  sweepBtn.disabled=true; runBtn.disabled=true;
+  sweepPanel.style.display="block";
+  sweepWrap.innerHTML='<div class="empty">전 종목·전 봉 조합을 탐색 중입니다…<br>20~40초 정도 걸려요.</div>';
+  const rows=[];
+  for(const sym of SWEEP_SYM){
+    for(const [iv,ivl] of SWEEP_IV){
+      let data; try{data=await fetchAny(sym,iv);}catch(e){continue;}
+      if(!data.close||data.close.length<120) continue;
+      for(const wfx of SWEEP_WF) for(const sfx of SWEEP_SF) for(const trx of SWEEP_TR){
+        const res=backtest(data,{wf:wfx,sf:sfx,tr:trx});
+        const s=summarize(res.trades);
+        if(s.trades>=MIN_TRADES)
+          rows.push({sym:sym.replace("USDT",""),iv:ivl,wf:wfx,sf:sfx,tr:trx,...s});
+      }
+    }
+  }
+  sweepBtn.disabled=false; runBtn.disabled=false;
+  if(!rows.length){
+    sweepWrap.innerHTML='<div class="empty">거래수 기준을 넘는 조합이 없었습니다.<br>(연결 실패거나, 표본이 부족한 봉이 많은 경우)</div>';
+    return;
+  }
+  rows.sort((a,b)=> b.win-a.win || (pfv(b)-pfv(a)) || b.ret-a.ret);
+  const best=rows[0], top=rows.slice(0,10);
+  let html=`<div class="best">🏆 승률 1위 · <b>${best.sym} · ${best.iv}</b><br>`+
+    `승률 <b>${best.win}%</b> · 손익비 ${best.pf===Infinity?"∞":best.pf} · `+
+    `수익 ${best.ret>0?"+":""}${best.ret}% · 거래 ${best.trades}건<br>`+
+    `<span class="bset">설정 — 빗각간격 ${best.wf}σ · 손절 ${best.sf}칸 · 익절 ${best.tr}R</span></div>`;
+  html+='<table class="swt"><tr><th>#</th><th>종목·봉</th><th>승률</th><th>PF</th><th>수익</th><th>거래</th></tr>';
+  top.forEach((r,i)=>{ html+=`<tr><td>${i+1}</td><td>${r.sym} ${r.iv}</td><td>${r.win}%</td>`+
+    `<td>${r.pf===Infinity?"∞":r.pf}</td><td class="${r.ret>=0?'p':'n'}">${r.ret>0?"+":""}${r.ret}%</td><td>${r.trades}</td></tr>`; });
+  html+='</table><div class="swnote">※ 승률순 정렬입니다. 승률이 높아도 <b>PF가 1 미만이면 실제로는 손실</b>이니, 승률·PF·수익을 함께 보세요. 월봉은 표본이 적어 대부분 빠졌을 수 있는데, 이게 바로 "큰 추세는 월봉인데 거래는 그걸로 못 한다"는 그 딜레마입니다.</div>';
+  sweepWrap.innerHTML=html;
+};
+
+// ---------- walk-forward 검증 (선택한 종목·봉) ----------
+const wfBtn=document.getElementById("wfbtn");
+const wfPanel=document.getElementById("wfPanel");
+const wfWrap=document.getElementById("wfWrap");
+const WF_WF=[0.4,0.5,0.6,0.8], WF_SF=[0.2,0.3], WF_TR=[1.5,2.0,3.0];
+function sliceData(d,a,b){return {high:d.high.slice(a,b),low:d.low.slice(a,b),close:d.close.slice(a,b)};}
+function wscore(s){ if(s.trades<10) return -1e9; const pf=s.pf===Infinity?5:s.pf; return pf+s.ret/100+s.mdd/100; }
+wfBtn.onclick=async()=>{
+  wfBtn.disabled=true; runBtn.disabled=true; sweepBtn.disabled=true;
+  wfPanel.style.display="block";
+  wfWrap.innerHTML='<div class="empty">'+symbol.replace("USDT","")+' · 선택한 봉으로 검증 중…</div>';
+  let data; try{data=await fetchAny(symbol,interval);}
+  catch(e){wfWrap.innerHTML='<div class="empty">시세 연결 실패. 잠시 후 다시 시도해 주세요.</div>';reEnable();return;}
+  const n=data.close.length;
+  if(n<200){wfWrap.innerHTML='<div class="empty">이 봉은 데이터가 적어 검증에 부적합합니다.<br>일봉이나 4시간봉으로 해보세요.</div>';reEnable();return;}
+  const cut=Math.floor(n*0.7), train=sliceData(data,0,cut), test=sliceData(data,cut,n);
+  let best=null,bs=-1e18,bTrain=null;
+  for(const wfx of WF_WF) for(const sfx of WF_SF) for(const trx of WF_TR){
+    const st=summarize(backtest(train,{wf:wfx,sf:sfx,tr:trx}).trades);
+    const sc=wscore(st);
+    if(sc>bs){bs=sc;best={wf:wfx,sf:sfx,tr:trx};bTrain=st;}
+  }
+  if(!best||!bTrain){wfWrap.innerHTML='<div class="empty">학습 구간에서 유효한 설정을 찾지 못했습니다(표본 부족).</div>';reEnable();return;}
+  const te=summarize(backtest(test,best).trades);
+  drawWF(data,cut);
+  const tpf=bTrain.pf===Infinity?9:bTrain.pf, epf=te.pf===Infinity?9:te.pf;
+  const pass=te.trades>=8 && epf>=1.2 && epf>=tpf*0.5;
+  renderWF(best,bTrain,te,pass);
+  reEnable();
+};
+function reEnable(){wfBtn.disabled=false;runBtn.disabled=false;sweepBtn.disabled=false;}
+function wcell(title,s){ const pf=s.pf===Infinity?"∞":s.pf, rc=s.ret>=0?"pos":"neg";
+  return `<div class="stat"><div class="k">${title}</div>
+    <div class="v mono" style="font-size:16px">${s.trades?s.win+"%":"-"}<span style="font-size:11px;color:var(--muted)"> 승률</span></div>
+    <div class="k" style="margin-top:7px">PF ${s.trades?pf:"-"} · <span class="${rc}">${s.trades?(s.ret>0?"+":"")+s.ret+"%":"-"}</span> · ${s.trades}건</div></div>`; }
+function renderWF(best,tr,te,pass){
+  const box = pass
+   ? `<div class="best" style="margin-top:12px;border-color:var(--long);background:linear-gradient(180deg,rgba(46,204,155,.14),rgba(46,204,155,.03))">✅ <b style="color:var(--long)">통과 (PASS)</b> — 학습 구간에서 고른 설정이 <b>한 번도 안 본 검증 구간</b>에서도 유지됐습니다. 실전 후보로 볼 만합니다 (그래도 소액·모의부터).</div>`
+   : `<div class="best" style="margin-top:12px;border-color:var(--short);background:linear-gradient(180deg,rgba(229,86,107,.14),rgba(229,86,107,.03))">⚠️ <b style="color:var(--short)">탈락 (FAIL)</b> — 학습 구간에선 좋았지만 <b>검증 구간에서 무너졌습니다.</b> 과거에만 맞는 설정(과최적화)일 가능성이 큽니다. 실전은 권하지 않습니다.</div>`;
+  wfWrap.innerHTML =
+   `<div class="bset" style="margin-bottom:11px">고른 설정 — 빗각간격 ${best.wf}σ · 손절 ${best.sf}칸 · 익절 ${best.tr}R</div>`+
+   `<div class="stats" style="grid-template-columns:1fr 1fr">${wcell("학습 (앞 70%)",tr)}${wcell("검증 (뒤 30%·안 본 데이터)",te)}</div>`+
+   box +
+   `<div class="swnote">오른쪽 <b>검증(뒤 30%)이 진짜 성적표</b>입니다. 학습 성적이 아무리 좋아도, 안 본 데이터에서 통해야 실전에서 의미가 있어요.</div>`;
+}
+function drawWF(data,cut){
+  const dpr=window.devicePixelRatio||1,W=cv.clientWidth,H=320;
+  cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
+  const c=data.close,n=c.length,pad=8;
+  const mn=Math.min(...data.low),mx=Math.max(...data.high),rng=(mx-mn)||1;
+  const X=i=>pad+(i/(n-1))*(W-2*pad), Y=v=>pad+(1-(v-mn)/rng)*(H-2*pad);
+  ctx.fillStyle="rgba(217,180,74,.07)";ctx.fillRect(X(cut),0,X(n-1)-X(cut),H);
+  ctx.strokeStyle="rgba(232,206,126,.7)";ctx.setLineDash([5,4]);ctx.lineWidth=1.2;
+  ctx.beginPath();ctx.moveTo(X(cut),0);ctx.lineTo(X(cut),H);ctx.stroke();ctx.setLineDash([]);
+  ctx.strokeStyle="rgba(180,190,210,.8)";ctx.lineWidth=1.2;ctx.beginPath();
+  c.forEach((v,i)=>{i?ctx.lineTo(X(i),Y(v)):ctx.moveTo(X(i),Y(v));});ctx.stroke();
+  ctx.fillStyle="#8B93A5";ctx.font="11px Pretendard";
+  ctx.fillText("학습 구간",X(cut*0.4),15);ctx.fillText("검증(안 본 데이터)",X(cut)+6,15);
+}
+
+window.addEventListener("resize",()=>{if(statsWrap.querySelector(".stats"))runBtn.click();});
+</script>
+</body>
+</html>
